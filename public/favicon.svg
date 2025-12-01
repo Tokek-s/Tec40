@@ -1,0 +1,20 @@
+<svg width="166" height="166" viewBox="0 0 166 166" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo circular -->
+  <circle cx="83" cy="83" r="75" fill="#C62828" stroke="#B71C1C" stroke-width="4"/>
+  
+  <!-- Estrella de fondo -->
+  <path d="M83 25 L92 55 L123 55 L98 74 L107 104 L83 85 L59 104 L68 74 L43 55 L74 55 Z" fill="#B71C1C" opacity="0.3"/>
+  
+  <!-- Texto "T40" -->
+  <text x="83" y="75" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="white">T</text>
+  <text x="83" y="110" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">40</text>
+  
+  <!-- Elementos decorativos -->
+  <circle cx="40" cy="40" r="3" fill="white" opacity="0.8"/>
+  <circle cx="126" cy="40" r="3" fill="white" opacity="0.8"/>
+  <circle cx="40" cy="126" r="3" fill="white" opacity="0.8"/>
+  <circle cx="126" cy="126" r="3" fill="white" opacity="0.8"/>
+  
+  <!-- Borde interior -->
+  <circle cx="83" cy="83" r="70" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
+</svg>
