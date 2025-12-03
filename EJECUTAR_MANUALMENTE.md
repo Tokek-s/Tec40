@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     apellido_materno varchar(255),
     correo varchar(255) NOT NULL,
     password varchar(255) NOT NULL,
-    rol enum('sistemas','coordinacion','docente','prefectura','vinculacion') NOT NULL,
+    rol enum('sistemas','coordinacion','docente','prefectura','vinculacio![alt text](image.png)n') NOT NULL,
     created_at timestamp NULL DEFAULT NULL,
     updated_at timestamp NULL DEFAULT NULL,
     PRIMARY KEY (id),

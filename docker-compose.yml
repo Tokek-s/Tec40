@@ -28,6 +28,7 @@ services:
       - "8081:80"
     volumes:
       - ./:/var/www/html
+      - ./apache-config.conf:/etc/apache2/sites-available/000-default.conf
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
