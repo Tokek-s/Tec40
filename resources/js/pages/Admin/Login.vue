@@ -3,7 +3,19 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 
 const form = useForm({ correo: '', contrasena: '' });
-const submit = () => form.post(route('admin.login.submit'), { onFinish: () => form.reset('contrasena') });
+const submit = () => {
+    form.post(route('admin.login.submit'), {
+        preserveState: false,
+        preserveScroll: false,
+        onFinish: () => form.reset('contrasena'),
+        onError: (errors) => {
+            console.error('Login errors:', errors);
+        },
+        onSuccess: () => {
+            console.log('Login successful - redirecting...');
+        }
+    });
+};
 </script>
 
 <template>
@@ -39,6 +51,10 @@ const submit = () => form.post(route('admin.login.submit'), { onFinish: () => fo
                     </div>
 
                     <form @submit.prevent="submit" class="space-y-6">
+                        <div v-if="form.errors.error" class="p-4 rounded-lg" style="background-color: rgba(198, 40, 40, 0.1); border: 1px solid rgba(198, 40, 40, 0.3);">
+                            <p class="text-sm font-medium" style="color: #C62828;">{{ form.errors.error }}</p>
+                        </div>
+
                         <div>
                             <label for="email" class="block text-sm font-semibold mb-2" style="color: #424242;">Correo</label>
                             <input id="email" v-model="form.correo" type="email" required autocomplete="username" class="w-full px-4 py-3 border rounded-lg transition-all duration-300 focus:outline-none focus:ring-2" style="border-color: #9E9E9E; color: #212121;" placeholder="usuario@tecnica40.edu.mx" />

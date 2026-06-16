@@ -23,19 +23,30 @@ class FormularioInscripcionController extends Controller
         $grado = $this->obtenerGrado($tipo);
         $esReinscripcion = ($tipo === 'reinscripcion');
 
-        // Obtener cuestionario activo
+        // Obtener cuestionario activo según el tipo
         $cuestionario = FechaCuestionario::where('activo', 1)
             ->whereDate('fecha_inicio', '<=', now())
             ->whereDate('fecha_fin', '>=', now())
-            ->when(!$esReinscripcion, function ($query) use ($tipo) {
-                $campoActivo = $tipo . '_activo';
-                $query->where($campoActivo, 1);
+            ->where(function ($query) use ($esReinscripcion, $tipo) {
+                if ($esReinscripcion) {
+                    // Para reinscripciones, buscar cuestionarios tipo 'reinscripcion'
+                    $query->where('tipo', 'reinscripcion');
+                } else {
+                    // Para inscripciones, buscar cuestionarios tipo 'inscripcion' o null
+                    $query->where(function ($q) {
+                        $q->where('tipo', 'inscripcion')
+                          ->orWhereNull('tipo');
+                    });
+                    // Y filtrar por el grado activo
+                    $campoActivo = $tipo . '_activo';
+                    $query->where($campoActivo, 1);
+                }
             })
             ->first();
 
         if (!$cuestionario) {
             return Inertia::render('FormularioInscripcion/NoDisponible', [
-                'mensaje' => 'No hay inscripciones disponibles en este momento.',
+                'mensaje' => 'No hay ' . ($esReinscripcion ? 'reinscripciones' : 'inscripciones') . ' disponibles en este momento.',
             ]);
         }
 
@@ -205,32 +216,32 @@ class FormularioInscripcionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error en inscripción: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al procesar la inscripción: ' . mb_convert_encoding($e->getMessage(), 'UTF-8', 'UTF-8'),
-            ], 500);
+            return redirect()->back()->withErrors([
+                'error' => 'Error al procesar la inscripción. Por favor, contacte con la escuela.',
+            ])->withInput();
         }
     }
 
     private function mostrarResumenAlumnoExistente(Alumno $alumno)
     {
-        $alumno->load(['salud', 'contactos']);
+        $alumno->load(['salud', 'contactos', 'historialActual.grupo']);
         
-        return response()->json([
-            'success' => false,
-            'alumno_existente' => true,
-            'message' => 'El alumno con esta CURP ya está inscrito.',
-            'data' => [
-                'curp' => $alumno->curp,
-                'nombre_completo' => "{$alumno->nombre} {$alumno->apellido_paterno} {$alumno->apellido_materno}",
-                'matricula' => $alumno->matricula,
-                'fecha_nacimiento' => $alumno->fecha_nacimiento,
-                'salud' => $alumno->salud,
-                'contactos' => $alumno->contactos,
-            ],
-            'nota' => 'Si está inconforme con algún dato, contacte a la escuela o acuda personalmente.',
-        ], 409);
+        $mensaje = "El alumno con CURP {$alumno->curp} ya está inscrito.\n";
+        $mensaje .= "Nombre: {$alumno->nombre_completo}\n";
+        $mensaje .= "Matrícula: {$alumno->matricula}\n";
+        
+        if ($alumno->historialActual && $alumno->historialActual->grupo) {
+            $grupo = $alumno->historialActual->grupo;
+            $mensaje .= "Grupo: {$grupo->grado}° {$grupo->clave} - {$grupo->turno}\n";
+        }
+        
+        $mensaje .= "\nSi está inconforme con algún dato, contacte con la escuela.";
+        
+        return redirect()->back()->withErrors([
+            'curp' => $mensaje,
+        ])->withInput();
     }
 
     private function obtenerGrado(string $tipo): int

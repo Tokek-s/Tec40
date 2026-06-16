@@ -453,7 +453,8 @@ class AdminController extends Controller
         Grupo::create($validated);
 
         // Disparar trabajo en segundo plano para asignar alumnos sin grupo
-        \App\Jobs\AsignarGruposAutomaticamente::dispatch();
+        // TODO: Corregir el Job AsignarGruposAutomaticamente antes de habilitarlo
+        // \App\Jobs\AsignarGruposAutomaticamente::dispatch();
 
         return redirect()->back()->with('success', 'Grupo creado correctamente');
     }

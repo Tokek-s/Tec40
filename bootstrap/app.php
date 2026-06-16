@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        
+        // Confiar en todos los proxies (necesario para Tailscale/Docker)
+        $middleware->trustProxies(at: '*');
 
         $middleware->web(append: [
             HandleAppearance::class,

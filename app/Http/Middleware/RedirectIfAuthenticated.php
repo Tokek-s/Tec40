@@ -28,7 +28,9 @@ class RedirectIfAuthenticated
                     return redirect()->route('prefectos.dashboard');
                 }
                 
-                if (in_array($rol, ['Sistemas', 'Direccion'])) {
+                // Roles administrativos
+                $rolesAdmin = ['Sistemas', 'Direccion', 'Subdireccion', 'Administrativo', 'Medico', 'Psicologo'];
+                if (in_array($rol, $rolesAdmin)) {
                     return redirect()->route('admin.dashboard');
                 }
                 

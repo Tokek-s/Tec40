@@ -30,8 +30,9 @@ class ValidateAdminAccess
 			return redirect()->route('prefectos.dashboard');
 		}
 		
-		// Solo permitir roles administrativos
-		if (!in_array($rol, ['Sistemas', 'Direccion'])) {
+		// Solo permitir roles administrativos (todos excepto Prefecto)
+		$rolesAdministrativos = ['Sistemas', 'Direccion', 'Subdireccion', 'Administrativo', 'Medico', 'Psicologo'];
+		if (!in_array($rol, $rolesAdministrativos)) {
 			abort(403, 'No tienes permisos para acceder al área de administración.');
 		}
 

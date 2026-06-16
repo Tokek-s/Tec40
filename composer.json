@@ -56,8 +56,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "node update_env.js",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --host=0.0.0.0\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names=server,queue,vite --kill-others"
+            "powershell -File dev.ps1"
         ],
         "dev:ssr": [
             "npm run build:ssr",
