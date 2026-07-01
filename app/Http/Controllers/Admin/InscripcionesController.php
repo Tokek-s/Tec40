@@ -22,22 +22,22 @@ class InscripcionesController extends Controller
             $inscritosPrimero = DB::table('historial_academico')
                 ->join('grupos', 'historial_academico.grupo_id', '=', 'grupos.id')
                 ->where('grupos.grado', 'primero')
-                ->where('historial_academico.ciclo', $cicloActual)
-                ->where('historial_academico.estatus', 'activo')
+                ->where('historial_academico.generacion', $cicloActual)
+                ->where('historial_academico.estatus', 'inscrito')
                 ->count();
-            
+
             $inscritosSegundo = DB::table('historial_academico')
                 ->join('grupos', 'historial_academico.grupo_id', '=', 'grupos.id')
                 ->where('grupos.grado', 'segundo')
-                ->where('historial_academico.ciclo', $cicloActual)
-                ->where('historial_academico.estatus', 'activo')
+                ->where('historial_academico.generacion', $cicloActual)
+                ->where('historial_academico.estatus', 'inscrito')
                 ->count();
-            
+
             $inscritosTercero = DB::table('historial_academico')
                 ->join('grupos', 'historial_academico.grupo_id', '=', 'grupos.id')
                 ->where('grupos.grado', 'tercero')
-                ->where('historial_academico.ciclo', $cicloActual)
-                ->where('historial_academico.estatus', 'activo')
+                ->where('historial_academico.generacion', $cicloActual)
+                ->where('historial_academico.estatus', 'inscrito')
                 ->count();
             
             return array_merge($cuestionario->toArray(), [
