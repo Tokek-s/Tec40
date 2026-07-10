@@ -171,11 +171,17 @@ function guardarCuestionario() {
       onSuccess: () => {
         router.visit(route('admin.inscripciones.reinscripcion'));
       },
+      onError: (errors) => {
+        if (errors.error) alert(errors.error);
+      },
     });
   } else {
     router.post('/admin/inscripciones/reinscripcion', formulario.value, {
       onSuccess: () => {
         router.visit(route('admin.inscripciones.reinscripcion'));
+      },
+      onError: (errors) => {
+        if (errors.error) alert(errors.error);
       },
     });
   }

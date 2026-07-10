@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\FechaCuestionario;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -87,6 +88,11 @@ class InscripcionesController extends Controller
             'campos_extra.*.tipo' => 'required|string|in:texto',
         ]);
 
+        $error = $this->validarGruposDisponibles($validated);
+        if ($error) {
+            return back()->withErrors(['error' => $error])->withInput();
+        }
+
         // Generar título automático
         $anioActual = date('Y');
         $validated['titulo'] = "Inscripciones {$anioActual}";
@@ -115,6 +121,11 @@ class InscripcionesController extends Controller
             'segundo_activo' => 'boolean',
             'tercero_activo' => 'boolean',
         ]);
+
+        $error = $this->validarGruposDisponibles(array_merge($cuestionario->toArray(), $validated));
+        if ($error) {
+            return back()->withErrors(['error' => $error])->withInput();
+        }
 
         $cuestionario->update($validated);
 
@@ -198,6 +209,27 @@ class InscripcionesController extends Controller
         } catch (\Exception $e) {
             return [];
         }
+    }
+
+    private function validarGruposDisponibles(array $datos): ?string
+    {
+        $nombresGrado = [1 => 'primero', 2 => 'segundo', 3 => 'tercero'];
+        $gradosSinGrupos = [];
+
+        foreach ($nombresGrado as $grado => $nombre) {
+            $campoActivo = $nombre . '_activo';
+
+            if (!empty($datos[$campoActivo]) && !Grupo::where('grado', $grado)->exists()) {
+                $gradosSinGrupos[] = $nombre;
+            }
+        }
+
+        if (empty($gradosSinGrupos)) {
+            return null;
+        }
+
+        $lista = implode(', ', $gradosSinGrupos);
+        return "No hay grupos creados para: {$lista}. Crea al menos un grupo para ese grado antes de publicar el formulario.";
     }
 
     private function obtenerCicloEscolarActual(): string

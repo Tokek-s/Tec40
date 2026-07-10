@@ -18,7 +18,7 @@ class AsignarGruposAutomatico extends Command
 
         // Obtener alumnos activos sin grupo
         $alumnosSinGrupo = HistorialAcademico::whereNull('grupo_id')
-            ->where('estatus', 'activo')
+            ->where('estatus', 'inscrito')
             ->with('alumno')
             ->get();
 
@@ -96,7 +96,7 @@ class AsignarGruposAutomatico extends Command
         // Contar alumnos activos por grupo
         $gruposConConteos = $grupos->map(function ($grupo) {
             $totalAlumnos = HistorialAcademico::where('grupo_id', $grupo->id)
-                ->where('estatus', 'activo')
+                ->where('estatus', 'inscrito')
                 ->count();
             
             return [

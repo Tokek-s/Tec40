@@ -193,25 +193,20 @@ class FormularioInscripcionController extends Controller
             // 9. Guardar campos extra en datos_extra
             $this->guardarCamposExtra($alumno->id, $validated['campos_extra']);
 
-            // 10. Asignar grupo automáticamente
-            $grupo = $this->asignarGrupoAutomatico($alumno, $grado);
+            // 10. Asignar grupo automáticamente (crea uno nuevo para el grado si no hay cupo)
+            $grupo = $this->asignarGrupoAutomatico($grado);
 
             // 11. Crear registro en historial académico
             HistorialAcademico::create([
                 'alumno_id' => $alumno->id,
-                'grupo_id' => $grupo ? $grupo->id : null,
+                'grupo_id' => $grupo->id,
                 'ciclo' => $this->obtenerCicloEscolarActual(),
-                'estatus' => 'activo',
+                'estatus' => 'inscrito',
             ]);
 
             DB::commit();
 
-            // Mensaje según si se asignó grupo o no
-            if ($grupo) {
-                return redirect()->route('home')->with('success', 'Inscripción realizada correctamente. Matrícula: ' . $matricula . ' - Grupo: ' . $grupo->clave);
-            } else {
-                return redirect()->route('home')->with('warning', 'Inscripción realizada correctamente. Matrícula: ' . $matricula . ' - El alumno será asignado a un grupo cuando haya disponibilidad.');
-            }
+            return redirect()->route('home')->with('success', 'Inscripción realizada correctamente. Matrícula: ' . $matricula . ' - Grupo: ' . $grupo->clave);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -367,21 +362,17 @@ class FormularioInscripcionController extends Controller
         }
     }
 
-    private function asignarGrupoAutomatico(Alumno $alumno, int $grado): ?Grupo
+    private function asignarGrupoAutomatico(int $grado): Grupo
     {
-        // Obtener todos los grupos disponibles para este grado
+        // Obtener todos los grupos existentes para este grado
         $grupos = Grupo::where('grado', $grado)->get();
-        
-        if ($grupos->isEmpty()) {
-            return null;
-        }
 
-        // Contar alumnos activos por grupo
+        // Contar alumnos inscritos por grupo
         $gruposConConteos = $grupos->map(function ($grupo) {
             $totalAlumnos = HistorialAcademico::where('grupo_id', $grupo->id)
-                ->where('estatus', 'activo')
+                ->where('estatus', 'inscrito')
                 ->count();
-            
+
             return [
                 'grupo' => $grupo,
                 'total' => $totalAlumnos,
@@ -391,15 +382,32 @@ class FormularioInscripcionController extends Controller
             return $info['disponibles'] > 0; // Solo grupos con espacio
         });
 
-        if ($gruposConConteos->isEmpty()) {
-            // Todos los grupos están llenos
-            return null;
+        if ($gruposConConteos->isNotEmpty()) {
+            // Asignar al grupo con menos alumnos
+            return $gruposConConteos->sortBy('total')->first()['grupo'];
         }
 
-        // Asignar al grupo con menos alumnos
-        $grupoSeleccionado = $gruposConConteos->sortBy('total')->first();
+        // No existe ningún grupo para este grado, o todos están llenos: crear uno nuevo
+        return $this->crearNuevoGrupo($grado, $grupos);
+    }
 
-        return $grupoSeleccionado['grupo'];
+    private function crearNuevoGrupo(int $grado, \Illuminate\Support\Collection $gruposExistentes): Grupo
+    {
+        $clavesUsadas = $gruposExistentes->pluck('clave')
+            ->map(fn ($clave) => strtoupper($clave))
+            ->all();
+
+        // Siguiente letra disponible: A, B, C... (si se agotan, sigue con AA, AB, ...)
+        $nuevaClave = 'A';
+        while (in_array($nuevaClave, $clavesUsadas, true)) {
+            $nuevaClave++;
+        }
+
+        return Grupo::create([
+            'grado' => $grado,
+            'clave' => $nuevaClave,
+            'turno' => $this->determinarTurno(),
+        ]);
     }
 
     private function obtenerCamposExtra(): array

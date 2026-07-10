@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Alumno;
 use App\Models\FechaCuestionario;
+use App\Models\Grupo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -80,6 +81,11 @@ class ReinscripcionController extends Controller
             'campos_extra.*.tipo' => 'required|string|in:texto',
         ]);
 
+        $error = $this->validarGruposDisponibles($validated);
+        if ($error) {
+            return back()->withErrors(['error' => $error])->withInput();
+        }
+
         // Crear cuestionario
         $cuestionario = FechaCuestionario::create([
             'titulo' => 'Reinscripción ' . date('Y'),
@@ -135,6 +141,11 @@ class ReinscripcionController extends Controller
             'segundo_activo' => 'required|boolean',
             'tercero_activo' => 'required|boolean',
         ]);
+
+        $error = $this->validarGruposDisponibles($validated);
+        if ($error) {
+            return back()->withErrors(['error' => $error])->withInput();
+        }
 
         $cuestionario->update($validated);
 
@@ -217,6 +228,27 @@ class ReinscripcionController extends Controller
             DB::rollBack();
             return back()->withErrors(['error' => 'Error al cerrar reinscripciones: ' . $e->getMessage()]);
         }
+    }
+
+    private function validarGruposDisponibles(array $datos): ?string
+    {
+        $nombresGrado = [1 => 'primero', 2 => 'segundo', 3 => 'tercero'];
+        $gradosSinGrupos = [];
+
+        foreach ($nombresGrado as $grado => $nombre) {
+            $campoActivo = $nombre . '_activo';
+
+            if (!empty($datos[$campoActivo]) && !Grupo::where('grado', $grado)->exists()) {
+                $gradosSinGrupos[] = $nombre;
+            }
+        }
+
+        if (empty($gradosSinGrupos)) {
+            return null;
+        }
+
+        $lista = implode(', ', $gradosSinGrupos);
+        return "No hay grupos creados para: {$lista}. Crea al menos un grupo para ese grado antes de publicar el formulario.";
     }
 }
 
